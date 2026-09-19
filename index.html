@@ -7,20 +7,14 @@
 <title>Helaku AI Studio</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:#0f0f17;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+html,body{height:100%;overflow:hidden;background:#0f0f17}
 #frame{position:fixed;top:0;left:0;right:0;bottom:0;border:0;width:100%;height:100%}
-#wait{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9ca3af;background:#0f0f17;z-index:5}
-#wait .spin{width:36px;height:36px;border:3px solid #2b2b3a;border-top-color:#3b82f6;border-radius:50%;animation:r 1s linear infinite;margin-bottom:14px}
-@keyframes r{to{transform:rotate(360deg)}}
-#err{color:#f87171;margin-top:10px;font-size:13px;text-align:center;padding:0 20px}
-#tunnels{color:#666;font-size:12px;margin-top:20px;text-align:center;padding:0 20px;max-width:90%}
 </style>
 </head>
 <body>
-<div id="wait"><div class="spin"></div><div>正在连接…</div><div id="err"></div><div id="tunnels"></div></div>
-<iframe id="frame" style="display:none" allow="autoplay; fullscreen; microphone; camera"></iframe>
+<iframe id="frame" allow="autoplay; fullscreen; microphone; camera"></iframe>
 <script>
-var tried = {}; // 记录已经试过的地址
+var tried = {};
 var urls = [];
 var curIdx = 0;
 
@@ -28,69 +22,30 @@ function loadUrls() {
   fetch('./latest.json?_='+Date.now(),{cache:'no-store'})
     .then(function(r){return r.json()})
     .then(function(j){
-      // 兼容旧格式（单个url）和新格式（urls数组）
-      if (j.urls && j.urls.length > 0) {
-        urls = j.urls;
-      } else if (j.url) {
-        urls = [j.url];
-      }
-      document.getElementById('tunnels').textContent = '可用通道：' + urls.length + ' 个';
-      tryNext();
+      if (j.urls && j.urls.length > 0) urls = j.urls;
+      else if (j.url) urls = [j.url];
+      jumpNext();
     })
-    .catch(function(e){
-      document.getElementById('err').textContent='加载失败，将自动重试…';
-      setTimeout(loadUrls, 5000);
+    .catch(function(){
+      setTimeout(loadUrls, 2000);
     });
 }
 
-function tryNext() {
+function jumpNext() {
   if (curIdx >= urls.length) {
-    // 所有都试过了，重置索引，重新加载列表
     curIdx = 0;
     tried = {};
-    document.getElementById('err').textContent='全部通道尝试完毕，正在重新加载…';
-    setTimeout(loadUrls, 3000);
+    setTimeout(loadUrls, 2000);
     return;
   }
   var url = urls[curIdx];
   curIdx++;
-  
-  if (tried[url]) { tryNext(); return; }
+  if (tried[url]) { jumpNext(); return; }
   tried[url] = true;
-  
-  // 尝试加载这个地址
-  var f = document.getElementById('frame');
-  f.src = url;
-  
-  // 3秒后检查 iframe 是否加载成功
-  setTimeout(function() {
-    try {
-      // 如果 iframe 能访问 contentWindow，说明同源且加载成功
-      // 跨域的话会抛错，我们假设没抛错就是成功了
-      // 更简单的方法：检查 iframe 的 contentWindow.location
-      // 跨域会抛 SecurityError，说明加载了
-      // 如果没抛错，说明还在 about:blank，没加载成功
-      var loc = f.contentWindow.location;
-      // 能访问 location.href 说明是 about:blank，没加载成功
-      if (loc.href === 'about:blank' || loc.href === '') {
-        // 没加载成功，试下一个
-        tryNext();
-      } else {
-        // 加载成功了
-        f.style.display = 'block';
-        document.getElementById('wait').style.display = 'none';
-      }
-    } catch(e) {
-      // 跨域错误，说明 iframe 已经加载了外部页面
-      // 这就是成功了
-      f.style.display = 'block';
-      document.getElementById('wait').style.display = 'none';
-    }
-  }, 3000);
+  document.getElementById('frame').src = url;
 }
 
 loadUrls();
-setInterval(loadUrls, 60000); // 每分钟刷新一次通道列表
 </script>
 </body>
 </html>
