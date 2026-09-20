@@ -12,40 +12,6 @@ html,body{height:100%;overflow:hidden;background:#0f0f17}
 </style>
 </head>
 <body>
-<iframe id="frame" allow="autoplay; fullscreen; microphone; camera"></iframe>
-<script>
-var tried = {};
-var urls = [];
-var curIdx = 0;
-
-function loadUrls() {
-  fetch('./latest.json?_='+Date.now(),{cache:'no-store'})
-    .then(function(r){return r.json()})
-    .then(function(j){
-      if (j.urls && j.urls.length > 0) urls = j.urls;
-      else if (j.url) urls = [j.url];
-      jumpNext();
-    })
-    .catch(function(){
-      setTimeout(loadUrls, 2000);
-    });
-}
-
-function jumpNext() {
-  if (curIdx >= urls.length) {
-    curIdx = 0;
-    tried = {};
-    setTimeout(loadUrls, 2000);
-    return;
-  }
-  var url = urls[curIdx];
-  curIdx++;
-  if (tried[url]) { jumpNext(); return; }
-  tried[url] = true;
-  document.getElementById('frame').src = url;
-}
-
-loadUrls();
-</script>
+<iframe id="frame" src="https://helaku.cyou" allow="autoplay; fullscreen; microphone; camera"></iframe>
 </body>
 </html>
