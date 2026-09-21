@@ -1,16 +1,20 @@
 name: Auto Keep Alive
-
 on:
   schedule:
     - cron: '*/15 * * * *'
   workflow_dispatch:
-
 jobs:
   ping-tunnel:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Helaku Cloudflare Tunnel
+        id: ping
+        continue-on-error: true
         run: |
           echo "正在发起保活与健康探测..."
           curl -m 15 -I -A "Mozilla/5.0 (GitHub Actions KeepAlive)" "https://helaku.cyou/wj/videos/?order=desc&sort=time"
-          echo "探测成功，服务在线！"
+      - name: Trigger Emergency Reset
+        if: failure()
+        run: |
+          echo "检测到服务掉线，正在发送紧急复活指令..."
+          curl -m 30 "https://helaku.cyou/reset?token=6ed44fa0040a160024b99bbdc292305d771ae017eea3156c"
