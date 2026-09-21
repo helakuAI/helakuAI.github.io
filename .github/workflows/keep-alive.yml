@@ -1,0 +1,16 @@
+name: Auto Keep Alive
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-tunnel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Helaku Cloudflare Tunnel
+        run: |
+          echo "正在发起保活与健康探测..."
+          curl -m 15 -I -A "Mozilla/5.0 (GitHub Actions KeepAlive)" "https://helaku.cyou/wj/videos/?order=desc&sort=time"
+          echo "探测成功，服务在线！"
